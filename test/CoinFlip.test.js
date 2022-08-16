@@ -12,7 +12,7 @@ describe("Lock", function () {
 
         const [owner, caller, otherAccount] = await ethers.getSigners();
         const CoinFlip = await ethers.getContractFactory("CoinFlip");
-        const game = await CoinFlip.deploy();
+        const game = await CoinFlip.deploy({value: 100000000});
         const tokenAddress = await game.token();
         console.log("Token address is: ", tokenAddress);
         const token = await ethers.getContractAt("GameToken", tokenAddress);
@@ -74,13 +74,13 @@ describe("Lock", function () {
     describe("PlayWithEther", function() {
       it("Should create game win game with ether correct args: ", async function() {
         const { game, caller } = await loadFixture(deployCoinFlipFixture);
-        await mine(1);
+        //await mine(1);
         
         const choice = ethers.BigNumber.from("1");
         const depAmount = ethers.BigNumber.from("0");
         const value = ethers.BigNumber.from("1000");
 
-        await game.buyEther({ value: 2000 });
+        
         await game.connect(caller).play(depAmount, choice, { value: value });
 
         const winGame = await game.games(0);
@@ -93,7 +93,7 @@ describe("Lock", function () {
         expect(winGame.status).to.equal(1);
       });
 
-      it("Should transfer correct amount when player win with ether: ", async function() {
+      it("Should create game lose game with ether correct args: ", async function() {
         const { game, caller } = await loadFixture(deployCoinFlipFixture);
         await mine(1);
         
@@ -101,7 +101,27 @@ describe("Lock", function () {
         const depAmount = ethers.BigNumber.from("0");
         const value = ethers.BigNumber.from("1000");
 
-        await game.buyEther({ value: 2*value });
+        
+        await game.connect(caller).play(depAmount, choice, { value: value });
+
+        const winGame = await game.games(0);
+
+        expect(winGame.player).to.equal(caller.address);
+        expect(winGame.depositAmount).to.equal(value);
+        expect(winGame.choice).to.equal(1);
+        expect(winGame.result).to.equal(0);
+        expect(winGame.prize).to.equal(0);
+        expect(winGame.status).to.equal(2);
+      });
+
+      it("Should transfer correct amount when player win with ether: ", async function() {
+        const { game, caller } = await loadFixture(deployCoinFlipFixture);
+        //await mine(1);
+        
+        const choice = ethers.BigNumber.from("1");
+        const depAmount = ethers.BigNumber.from("0");
+        const value = ethers.BigNumber.from("1000");
+
         const prize = value * 195 / 100;
 
         await expect( await game.connect(caller).play(depAmount, choice, {value: 1000})).to.changeEtherBalances([game, caller], [value - prize, prize - value]);
@@ -109,12 +129,12 @@ describe("Lock", function () {
 
       it("Should transfer correct amount when player lose with ether: ", async function() {
         const { game, caller } = await loadFixture(deployCoinFlipFixture);
-        
+        await mine(1);
+
         const choice = ethers.BigNumber.from("1");
         const depAmount = ethers.BigNumber.from("0");
         const value = ethers.BigNumber.from("1000");
 
-        await game.buyEther({ value: 2*value });
 
         await expect( await game.connect(caller).play(depAmount, choice, {value: 1000})).to.changeEtherBalances([game, caller], [value, 0 - value]);
       });
@@ -125,8 +145,6 @@ describe("Lock", function () {
         const choice = ethers.BigNumber.from("0");
         const depAmount = ethers.BigNumber.from("0");
         const value = ethers.BigNumber.from("10");
-
-        await game.buyEther({ value: 2*value });
   
         await expect(game.connect(caller).play(depAmount, choice, {value: value})).to.be.revertedWith("CoinFlip: Wrong deposit amount");
       });

@@ -40,7 +40,7 @@ contract CoinFlip is Ownable {
         Status indexed status
     );
 
-    constructor() {
+    constructor() payable {
         // address(token);
         // address(this);
         coeff = 195;
@@ -114,8 +114,6 @@ contract CoinFlip is Ownable {
             game.status
         );
     }
-
-    function buyEther () public payable {}
 
     function playWithEther( uint256 choice ) payable external {
         require(choice == 0 || choice == 1, "CoinFlip: wrong coiche");
