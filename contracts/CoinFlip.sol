@@ -115,43 +115,6 @@ contract CoinFlip is Ownable {
         );
     }
 
-    function playWithEther( uint256 choice ) payable external {
-        require(choice == 0 || choice == 1, "CoinFlip: wrong coiche");
-        require(msg.value >= minDepositAmount && msg.value <= maxDepositAmount, "CoinFlip: Wrong deposit amount");
-        Game memory game = Game(
-            msg.sender,
-            msg.value,
-            1,
-            0,
-            0, 
-            Status.PENDING
-        );
-        uint256 result = block.number % 2;
-        if(result == 1) {
-            game.result = result;
-            game.status = Status.WIN;
-            game.prize = msg.value * coeff / 100;
-            payable(msg.sender).transfer(game.prize);
-            games[totalGamesCount] = game;
-        } else {
-            game.result = result;
-            game.status = Status.LOSE;
-            game.prize = 0;
-            profit += game.depositAmount;
-            games[totalGamesCount] = game;
-        }
-        totalGamesCount += 1;
-
-        emit GameFineshed(
-            game.player,
-            game.depositAmount,
-            game.choice,
-            game.result,
-            game.prize,
-            game.status
-        );
-    }
-
     function withdraw(uint256 amount) external onlyOwner {
         require(token.balanceOf((address(this))) >= amount, "CoinFlip: Not enough funds");
         token.transfer(msg.sender, amount);
